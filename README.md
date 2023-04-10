@@ -11,12 +11,16 @@ Proxmox virtual nics don't seem to respond to WOL packets. This service looks ou
 ### How?
 
 ```
-# git clone https://github.com/jd1123/proxmoxwol
+# git clone https://github.com/NigiNagiNu/proxmoxwol
 # cd proxmoxwol
 # ./install.sh
-# sudo systemctl start proxmox-vm.servive
+# systemctl start proxmoxwol-vm.service
 ```
 
 ### What next?
 
 Can improve this quite a bit. Just a quick script written to solve a small problem.
+
+### Changes for Proxmox VE 7.4
+* Removed sudo from install.sh
+* Modified proxmoxwol-listener.py to support ECHO packets

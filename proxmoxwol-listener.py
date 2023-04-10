@@ -5,6 +5,8 @@ import socketserver
 import binascii
 import os
 import logging
+import threading
+import subprocess
 try:
     from systemd.journal import JournalHandler
     systemd_present = True
@@ -17,7 +19,8 @@ class UDPListener(socketserver.BaseRequestHandler):
     def __init__(self, request, client_address, server):
         self.d = dict()
         self.configdir = '/etc/pve/qemu-server/'
-        self.resume_command = 'qm resume '
+        self.resume_command = 'qm start '
+        self.status_command = 'qm status '
         socketserver.BaseRequestHandler.__init__(self, request, client_address, server)
         return
     
@@ -54,7 +57,9 @@ class UDPListener(socketserver.BaseRequestHandler):
         return ''.join(mac.split(':'))
     
     def wakemachine(self, qemu_id):
-        os.system(self.resume_command + qemu_id)
+        vid_status = subprocess.check_output(self.status_command + qemu_id, shell=True)
+        if "running" not in vid_status.decode("utf-8"):
+            os.system(self.resume_command + qemu_id)
 
     def parsefiles(self, filename):
         try:
@@ -74,12 +79,16 @@ class UDPListener(socketserver.BaseRequestHandler):
         except FileNotFoundError:
             logger.warning('Proxmox configuration files not found at {}'.format(self.configdir))
 
-
+           
 def run_server():
     HOST, PORT = '', 9
-    server = socketserver.UDPServer((HOST, PORT), UDPListener)
-    server.serve_forever()
-
+    server_wol = socketserver.UDPServer((HOST, PORT), UDPListener)
+    HOST, PORT = '', 7
+    server_echo = socketserver.UDPServer((HOST, PORT), UDPListener)
+    t1 = threading.Thread(target=server_wol.serve_forever)
+    t2 = threading.Thread(target=server_echo.serve_forever)
+    for t in t1, t2: t.start()
+    for t in t1, t2: t.join()
 
 if __name__ == '__main__':
     logger = logging.getLogger(__name__)
