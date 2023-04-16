@@ -14,6 +14,7 @@ Proxmox virtual nics don't seem to respond to WOL packets. This service looks ou
 # git clone https://github.com/NigiNagiNu/proxmoxwol
 # cd proxmoxwol
 # ./install.sh
+# systemctl enable proxmoxwol-vm.service
 # systemctl start proxmoxwol-vm.service
 ```
 
